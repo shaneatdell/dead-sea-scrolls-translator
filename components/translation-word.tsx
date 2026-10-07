@@ -8,18 +8,22 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, Lock, Unlock, GripVertical } from "lucide-react";
 
 interface TranslationWordProps {
   word: ScrollWord;
   onTranslationSelect: (wordId: string, selectedTranslation: TranslationOption) => void;
   currentTranslation?: TranslationOption;
+  isLocked?: boolean;
+  onLockToggle?: () => void;
 }
 
 export function TranslationWord({
   word,
   onTranslationSelect,
   currentTranslation,
+  isLocked = false,
+  onLockToggle,
 }: TranslationWordProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -30,6 +34,11 @@ export function TranslationWord({
     setIsOpen(false);
   };
 
+  const handleLockClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onLockToggle?.();
+  };
+
   return (
     <HoverCard open={isOpen} onOpenChange={setIsOpen}>
       <HoverCardTrigger asChild>
@@ -37,22 +46,46 @@ export function TranslationWord({
           variant="ghost"
           className={`h-auto p-4 text-left font-normal border border-purple-900/20 hover:bg-purple-900/20 hover:border-purple-900/40 ${
             currentTranslation ? "bg-purple-900/30 border-purple-900/50" : "bg-gray-800/30"
-          }`}
+          } ${isLocked ? "ring-2 ring-purple-500/50" : ""}`}
         >
-          <span className="flex flex-col gap-2">
-            <span className="text-xl text-purple-400 font-mono font-medium">
-              {word.original}
-            </span>
-            <span className="text-sm text-gray-100 font-medium">{displayText}</span>
-            {word.alternatives.length > 0 && (
-              <ChevronDown className="w-4 h-4 ml-auto opacity-50 text-purple-400" />
+          <div className="flex items-start gap-2 w-full">
+            <GripVertical className="w-5 h-5 text-gray-500 flex-shrink-0 mt-1 cursor-grab" />
+            <div className="flex-1">
+              <span className="flex flex-col gap-2">
+                <span className="text-xl text-purple-400 font-mono font-medium">
+                  {word.original}
+                </span>
+                <span className="text-sm text-gray-100 font-medium">{displayText}</span>
+                {word.alternatives.length > 0 && (
+                  <ChevronDown className="w-4 h-4 ml-auto opacity-50 text-purple-400" />
+                )}
+              </span>
+            </div>
+            {onLockToggle && (
+              <button
+                onClick={handleLockClick}
+                className="flex-shrink-0 p-1 hover:bg-purple-900/30 rounded transition-colors"
+                title={isLocked ? "Unlock word" : "Lock word"}
+              >
+                {isLocked ? (
+                  <Lock className="w-4 h-4 text-purple-400" />
+                ) : (
+                  <Unlock className="w-4 h-4 text-gray-500" />
+                )}
+              </button>
             )}
-          </span>
+          </div>
         </Button>
       </HoverCardTrigger>
       {word.alternatives.length > 0 && (
         <HoverCardContent className="w-80 bg-gray-800 border-purple-900/50">
           <div className="space-y-3">
+            {isLocked && (
+              <div className="flex items-center gap-2 text-purple-400 text-sm">
+                <Lock className="w-4 h-4" />
+                <span>This word is locked and cannot be reordered</span>
+              </div>
+            )}
             <div>
               <h4 className="text-sm font-semibold mb-1 text-gray-100">Primary Translation</h4>
               <p className="text-sm text-gray-400">

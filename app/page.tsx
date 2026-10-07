@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { deadSeaScrollsData, ScrollSection, TranslationOption } from "@/lib/scroll-data";
 import { TranslationWord } from "@/components/translation-word";
 import { Button } from "@/components/ui/button";
-import { BookOpen, RotateCcw } from "lucide-react";
+import { BookOpen, RotateCcw, Lock, Unlock } from "lucide-react";
 
 export default function Home() {
   const [selectedSection, setSelectedSection] = useState<ScrollSection>(
@@ -13,6 +14,17 @@ export default function Home() {
   const [userTranslations, setUserTranslations] = useState<
     Record<string, TranslationOption>
   >({});
+  const [wordOrder, setWordOrder] = useState<string[]>(
+    deadSeaScrollsData[0].words.map((w) => w.id)
+  );
+  const [lockedWords, setLockedWords] = useState<Record<string, boolean>>({});
+
+  // Reset word order when section changes
+  useEffect(() => {
+    setWordOrder(selectedSection.words.map((w) => w.id));
+    setUserTranslations({});
+    setLockedWords({});
+  }, [selectedSection.id]);
 
   const handleTranslationSelect = (
     wordId: string,
@@ -24,13 +36,36 @@ export default function Home() {
     }));
   };
 
-  const handleReset = () => {
+  const handleLockToggle = (wordId: string) => {
+    setLockedWords((prev) => ({
+      ...prev,
+      [wordId]: !prev[wordId],
+    }));
+  };
+
+  const handleResetTranslations = () => {
     setUserTranslations({});
   };
 
+  const handleResetOrder = () => {
+    setWordOrder(selectedSection.words.map((w) => w.id));
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+
+    const items = Array.from(wordOrder);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setWordOrder(items);
+  };
+
   const getFullTranslation = () => {
-    return selectedSection.words
-      .map((word) => {
+    return wordOrder
+      .map((wordId) => {
+        const word = selectedSection.words.find((w) => w.id === wordId);
+        if (!word) return "";
         const selected = userTranslations[word.id];
         return selected ? selected.text : word.primaryTranslation;
       })
@@ -87,26 +122,69 @@ export default function Home() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold text-gray-100">Interactive Translation</h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              className="gap-2 text-gray-300 hover:text-gray-100 hover:bg-purple-900/20"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetTranslations}
+                className="gap-2 text-gray-300 hover:text-gray-100 hover:bg-purple-900/20"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset Translations
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetOrder}
+                className="gap-2 text-gray-300 hover:text-gray-100 hover:bg-purple-900/20"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset Order
+              </Button>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {selectedSection.words.map((word) => (
-              <TranslationWord
-                key={word.id}
-                word={word}
-                onTranslationSelect={handleTranslationSelect}
-                currentTranslation={userTranslations[word.id]}
-              />
-            ))}
-          </div>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="words">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
+                >
+                  {wordOrder.map((wordId, index) => {
+                    const word = selectedSection.words.find((w) => w.id === wordId);
+                    if (!word) return null;
+                    return (
+                      <Draggable
+                        key={word.id}
+                        draggableId={word.id}
+                        index={index}
+                        isDragDisabled={lockedWords[word.id]}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={`${snapshot.isDragging ? "opacity-50" : ""}`}
+                          >
+                            <TranslationWord
+                              word={word}
+                              onTranslationSelect={handleTranslationSelect}
+                              currentTranslation={userTranslations[word.id]}
+                              isLocked={lockedWords[word.id]}
+                              onLockToggle={() => handleLockToggle(word.id)}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         </div>
 
         {/* Full Translation Display */}
@@ -116,10 +194,19 @@ export default function Home() {
             {getFullTranslation()}
           </p>
           <div className="mt-4 pt-4 border-t border-purple-900/30">
-            <p className="text-sm text-gray-400">
-              {Object.keys(userTranslations).length} alternative translation
-              {Object.keys(userTranslations).length !== 1 ? "s" : ""} selected
-            </p>
+            <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+              <p>
+                {Object.keys(userTranslations).length} alternative translation
+                {Object.keys(userTranslations).length !== 1 ? "s" : ""} selected
+              </p>
+              <p>
+                {Object.keys(lockedWords).filter((k) => lockedWords[k]).length} word
+                {Object.keys(lockedWords).filter((k) => lockedWords[k]).length !== 1 ? "s" : ""} locked
+              </p>
+              <p>
+                {wordOrder.join(",") !== selectedSection.words.map((w) => w.id).join(",") ? "Order modified" : "Original order"}
+              </p>
+            </div>
           </div>
         </div>
       </div>
