@@ -25,7 +25,6 @@ import { BookOpen, RotateCcw, Lock, Unlock } from "lucide-react";
 
 function SortableWord({
   word,
-  index,
   onTranslationSelect,
   onResetTranslation,
   onCustomTranslation,
@@ -35,7 +34,6 @@ function SortableWord({
   onLockToggle,
 }: {
   word: any;
-  index: number;
   onTranslationSelect: (wordId: string, selectedTranslation: TranslationOption) => void;
   onResetTranslation: (wordId: string) => void;
   onCustomTranslation: (wordId: string, customText: string) => void;
@@ -51,11 +49,15 @@ function SortableWord({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: word.id, disabled: isLocked });
+  } = useSortable({
+    id: word.id,
+    disabled: isLocked,
+    animateLayoutChanges: () => false,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'transform 150ms ease' : undefined,
     opacity: isDragging ? 0.4 : 1,
   };
 
@@ -260,15 +262,14 @@ export default function Home() {
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={wordOrder} strategy={verticalListSortingStrategy}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {wordOrder.map((wordId, index) => {
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 transition-none">
+                {wordOrder.map((wordId) => {
                   const word = selectedSection.words.find((w) => w.id === wordId);
                   if (!word) return null;
                   return (
                     <SortableWord
                       key={word.id}
                       word={word}
-                      index={index}
                       onTranslationSelect={handleTranslationSelect}
                       onResetTranslation={handleResetTranslation}
                       onCustomTranslation={handleCustomTranslation}
