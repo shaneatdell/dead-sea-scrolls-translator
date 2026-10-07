@@ -1,11 +1,79 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { deadSeaScrollsData, ScrollSection, TranslationOption } from "@/lib/scroll-data";
 import { TranslationWord } from "@/components/translation-word";
 import { Button } from "@/components/ui/button";
 import { BookOpen, RotateCcw, Lock, Unlock } from "lucide-react";
+
+function SortableWord({
+  word,
+  index,
+  onTranslationSelect,
+  onResetTranslation,
+  onCustomTranslation,
+  currentTranslation,
+  customTranslation,
+  isLocked,
+  onLockToggle,
+}: {
+  word: any;
+  index: number;
+  onTranslationSelect: (wordId: string, selectedTranslation: TranslationOption) => void;
+  onResetTranslation: (wordId: string) => void;
+  onCustomTranslation: (wordId: string, customText: string) => void;
+  currentTranslation?: TranslationOption;
+  customTranslation?: string;
+  isLocked?: boolean;
+  onLockToggle: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: word.id, disabled: isLocked });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <TranslationWord
+        word={word}
+        onTranslationSelect={onTranslationSelect}
+        onResetTranslation={onResetTranslation}
+        onCustomTranslation={onCustomTranslation}
+        currentTranslation={currentTranslation}
+        customTranslation={customTranslation}
+        isLocked={isLocked}
+        onLockToggle={onLockToggle}
+      />
+    </div>
+  );
+}
 
 export default function Home() {
   const [selectedSection, setSelectedSection] = useState<ScrollSection>(
@@ -21,6 +89,13 @@ export default function Home() {
     deadSeaScrollsData[0].words.map((w) => w.id)
   );
   const [lockedWords, setLockedWords] = useState<Record<string, boolean>>({});
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Reset word order when section changes
   useEffect(() => {
@@ -82,14 +157,17 @@ export default function Home() {
     setWordOrder(selectedSection.words.map((w) => w.id));
   };
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
 
-    const items = Array.from(wordOrder);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    if (over && active.id !== over.id) {
+      setWordOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
 
-    setWordOrder(items);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
   };
 
   const getFullTranslation = () => {
@@ -176,57 +254,34 @@ export default function Home() {
               </Button>
             </div>
           </div>
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="words">
-              {(provided, snapshot) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="flex flex-col gap-3 min-h-[400px]"
-                >
-                  {wordOrder.map((wordId, index) => {
-                    const word = selectedSection.words.find((w) => w.id === wordId);
-                    if (!word) return null;
-                    return (
-                      <Draggable
-                        key={word.id}
-                        draggableId={word.id}
-                        index={index}
-                        isDragDisabled={lockedWords[word.id]}
-                      >
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`${snapshot.isDragging ? "opacity-40 scale-95" : ""} transition-all duration-200`}
-                            style={{
-                              ...provided.draggableProps.style,
-                              transform: snapshot.isDragging
-                                ? provided.draggableProps.style?.transform
-                                : provided.draggableProps.style?.transform,
-                            }}
-                          >
-                            <TranslationWord
-                              word={word}
-                              onTranslationSelect={handleTranslationSelect}
-                              onResetTranslation={handleResetTranslation}
-                              onCustomTranslation={handleCustomTranslation}
-                              currentTranslation={userTranslations[word.id]}
-                              customTranslation={customTranslations[word.id]}
-                              isLocked={lockedWords[word.id]}
-                              onLockToggle={() => handleLockToggle(word.id)}
-                            />
-                          </div>
-                        )}
-                      </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={wordOrder} strategy={verticalListSortingStrategy}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {wordOrder.map((wordId, index) => {
+                  const word = selectedSection.words.find((w) => w.id === wordId);
+                  if (!word) return null;
+                  return (
+                    <SortableWord
+                      key={word.id}
+                      word={word}
+                      index={index}
+                      onTranslationSelect={handleTranslationSelect}
+                      onResetTranslation={handleResetTranslation}
+                      onCustomTranslation={handleCustomTranslation}
+                      currentTranslation={userTranslations[word.id]}
+                      customTranslation={customTranslations[word.id]}
+                      isLocked={lockedWords[word.id]}
+                      onLockToggle={() => handleLockToggle(word.id)}
+                    />
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
 
         {/* Full Translation Display */}
