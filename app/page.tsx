@@ -14,6 +14,9 @@ export default function Home() {
   const [userTranslations, setUserTranslations] = useState<
     Record<string, TranslationOption>
   >({});
+  const [customTranslations, setCustomTranslations] = useState<
+    Record<string, string>
+  >({});
   const [wordOrder, setWordOrder] = useState<string[]>(
     deadSeaScrollsData[0].words.map((w) => w.id)
   );
@@ -23,6 +26,7 @@ export default function Home() {
   useEffect(() => {
     setWordOrder(selectedSection.words.map((w) => w.id));
     setUserTranslations({});
+    setCustomTranslations({});
     setLockedWords({});
   }, [selectedSection.id]);
 
@@ -34,6 +38,32 @@ export default function Home() {
       ...prev,
       [wordId]: selectedTranslation,
     }));
+    setCustomTranslations((prev) => {
+      const { [wordId]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const handleResetTranslation = (wordId: string) => {
+    setUserTranslations((prev) => {
+      const { [wordId]: _, ...rest } = prev;
+      return rest;
+    });
+    setCustomTranslations((prev) => {
+      const { [wordId]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const handleCustomTranslation = (wordId: string, customText: string) => {
+    setCustomTranslations((prev) => ({
+      ...prev,
+      [wordId]: customText,
+    }));
+    setUserTranslations((prev) => {
+      const { [wordId]: _, ...rest } = prev;
+      return rest;
+    });
   };
 
   const handleLockToggle = (wordId: string) => {
@@ -45,6 +75,7 @@ export default function Home() {
 
   const handleResetTranslations = () => {
     setUserTranslations({});
+    setCustomTranslations({});
   };
 
   const handleResetOrder = () => {
@@ -66,6 +97,8 @@ export default function Home() {
       .map((wordId) => {
         const word = selectedSection.words.find((w) => w.id === wordId);
         if (!word) return "";
+        const custom = customTranslations[word.id];
+        if (custom) return custom;
         const selected = userTranslations[word.id];
         return selected ? selected.text : word.primaryTranslation;
       })
@@ -171,7 +204,10 @@ export default function Home() {
                             <TranslationWord
                               word={word}
                               onTranslationSelect={handleTranslationSelect}
+                              onResetTranslation={handleResetTranslation}
+                              onCustomTranslation={handleCustomTranslation}
                               currentTranslation={userTranslations[word.id]}
+                              customTranslation={customTranslations[word.id]}
                               isLocked={lockedWords[word.id]}
                               onLockToggle={() => handleLockToggle(word.id)}
                             />
@@ -198,6 +234,10 @@ export default function Home() {
               <p>
                 {Object.keys(userTranslations).length} alternative translation
                 {Object.keys(userTranslations).length !== 1 ? "s" : ""} selected
+              </p>
+              <p>
+                {Object.keys(customTranslations).length} custom translation
+                {Object.keys(customTranslations).length !== 1 ? "s" : ""} added
               </p>
               <p>
                 {Object.keys(lockedWords).filter((k) => lockedWords[k]).length} word
