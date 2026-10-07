@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Exec(npm create)",
+      "Exec(node)",
+      "Exec($env:Path)",
+      "Exec(devin)"
+    ]
+  }
+}
