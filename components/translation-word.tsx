@@ -90,17 +90,19 @@ export function TranslationWord({
               </span>
             </div>
             {onLockToggle && (
-              <button
+              <div
                 onClick={handleLockClick}
-                className="flex-shrink-0 p-1 hover:bg-purple-900/30 rounded transition-colors"
+                className="flex-shrink-0 p-1 hover:bg-purple-900/30 rounded transition-colors cursor-pointer"
                 title={isLocked ? "Unlock word" : "Lock word"}
+                role="button"
+                tabIndex={0}
               >
                 {isLocked ? (
                   <Lock className="w-4 h-4 text-purple-400" />
                 ) : (
                   <Unlock className="w-4 h-4 text-gray-500" />
                 )}
-              </button>
+              </div>
             )}
           </div>
         </Button>
