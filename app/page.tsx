@@ -40,17 +40,17 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <main className="min-h-screen bg-gradient-to-br from-stone-900 via-amber-950 to-stone-950">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <header className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <BookOpen className="w-8 h-8 text-amber-700 dark:text-amber-400" />
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
+            <BookOpen className="w-8 h-8 text-amber-500" />
+            <h1 className="text-4xl font-bold text-amber-100">
               Dead Sea Scrolls Translator
             </h1>
           </div>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <p className="text-lg text-amber-200/70">
             Explore ancient texts and develop your own interpretation
           </p>
         </header>
@@ -64,6 +64,11 @@ export default function Home() {
                 selectedSection.id === section.id ? "default" : "outline"
               }
               onClick={() => setSelectedSection(section)}
+              className={
+                selectedSection.id === section.id
+                  ? "bg-amber-600 hover:bg-amber-700 text-amber-50 border-amber-500"
+                  : "bg-stone-800/50 text-amber-200 border-amber-900/30 hover:bg-amber-900/20 hover:text-amber-100"
+              }
             >
               {section.title}
             </Button>
@@ -71,9 +76,9 @@ export default function Home() {
         </div>
 
         {/* Section Info */}
-        <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-semibold mb-2">{selectedSection.title}</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+        <div className="mb-8 p-6 bg-stone-800/50 backdrop-blur-sm rounded-lg shadow-lg border border-amber-900/30">
+          <h2 className="text-2xl font-semibold mb-2 text-amber-100">{selectedSection.title}</h2>
+          <p className="text-amber-200/70">
             {selectedSection.description}
           </p>
         </div>
@@ -81,12 +86,12 @@ export default function Home() {
         {/* Translation Grid */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold">Interactive Translation</h3>
+            <h3 className="text-xl font-semibold text-amber-100">Interactive Translation</h3>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleReset}
-              className="gap-2"
+              className="gap-2 text-amber-200 hover:text-amber-100 hover:bg-amber-900/20"
             >
               <RotateCcw className="w-4 h-4" />
               Reset
@@ -105,13 +110,13 @@ export default function Home() {
         </div>
 
         {/* Full Translation Display */}
-        <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <h3 className="text-xl font-semibold mb-4">Your Interpretation</h3>
-          <p className="text-lg leading-relaxed text-gray-900 dark:text-gray-100 font-serif">
+        <div className="p-6 bg-stone-800/50 backdrop-blur-sm rounded-lg shadow-lg border border-amber-900/30">
+          <h3 className="text-xl font-semibold mb-4 text-amber-100">Your Interpretation</h3>
+          <p className="text-lg leading-relaxed text-amber-50 font-serif">
             {getFullTranslation()}
           </p>
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="mt-4 pt-4 border-t border-amber-900/30">
+            <p className="text-sm text-amber-200/60">
               {Object.keys(userTranslations).length} alternative translation
               {Object.keys(userTranslations).length !== 1 ? "s" : ""} selected
             </p>
