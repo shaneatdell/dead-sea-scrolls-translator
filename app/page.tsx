@@ -182,7 +182,7 @@ export default function Home() {
                 <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[100px]"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[400px]"
                 >
                   {wordOrder.map((wordId, index) => {
                     const word = selectedSection.words.find((w) => w.id === wordId);
