@@ -222,11 +222,7 @@ export default function Home() {
                       </Draggable>
                     );
                   })}
-                  {provided.placeholder && (
-                    <div className="bg-purple-900/30 border-2 border-dashed border-purple-500/50 rounded-lg p-4 min-h-[120px] flex items-center justify-center">
-                      <span className="text-purple-400 text-sm">Drop here</span>
-                    </div>
-                  )}
+                  {provided.placeholder}
                 </div>
               )}
             </Droppable>
