@@ -178,11 +178,11 @@ export default function Home() {
           </div>
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="words">
-              {(provided) => (
+              {(provided, snapshot) => (
                 <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[100px]"
                 >
                   {wordOrder.map((wordId, index) => {
                     const word = selectedSection.words.find((w) => w.id === wordId);
@@ -199,7 +199,13 @@ export default function Home() {
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             {...provided.dragHandleProps}
-                            className={`${snapshot.isDragging ? "opacity-50" : ""}`}
+                            className={`${snapshot.isDragging ? "opacity-40 scale-95" : ""} transition-all duration-200`}
+                            style={{
+                              ...provided.draggableProps.style,
+                              transform: snapshot.isDragging
+                                ? provided.draggableProps.style?.transform
+                                : provided.draggableProps.style?.transform,
+                            }}
                           >
                             <TranslationWord
                               word={word}
@@ -216,7 +222,11 @@ export default function Home() {
                       </Draggable>
                     );
                   })}
-                  {provided.placeholder}
+                  {provided.placeholder && (
+                    <div className="bg-purple-900/30 border-2 border-dashed border-purple-500/50 rounded-lg p-4 min-h-[120px] flex items-center justify-center">
+                      <span className="text-purple-400 text-sm">Drop here</span>
+                    </div>
+                  )}
                 </div>
               )}
             </Droppable>
