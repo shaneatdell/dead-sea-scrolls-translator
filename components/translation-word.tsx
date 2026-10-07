@@ -35,12 +35,12 @@ export function TranslationWord({
       <HoverCardTrigger asChild>
         <Button
           variant="ghost"
-          className={`h-auto p-3 text-left font-normal border border-purple-900/20 hover:bg-purple-900/20 hover:border-purple-900/40 ${
+          className={`h-auto p-4 text-left font-normal border border-purple-900/20 hover:bg-purple-900/20 hover:border-purple-900/40 ${
             currentTranslation ? "bg-purple-900/30 border-purple-900/50" : "bg-gray-800/30"
           }`}
         >
           <span className="flex flex-col gap-2">
-            <span className="text-base text-purple-400 font-mono font-medium">
+            <span className="text-xl text-purple-400 font-mono font-medium">
               {word.original}
             </span>
             <span className="text-sm text-gray-100 font-medium">{displayText}</span>
