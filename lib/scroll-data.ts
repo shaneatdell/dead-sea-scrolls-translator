@@ -931,64 +931,54 @@ export function applyTextPreset(
 ): { wordOrder: string[]; customTranslations: Record<string, string> } {
   const wordOrder: string[] = [];
   const customTranslations: Record<string, string> = {};
-  const wordPositions = new Map<string, number>(); // wordId -> position in target text
+  const usedWordIds = new Set<string>();
 
-  // Create a map of all possible translations for each word
-  const wordTranslations = new Map<string, string[]>(); // wordId -> array of possible translations
+  // Split target text into words
+  const targetWords = translatedText.split(/\s+/).filter(w => w.length > 0);
+
+  // Create a map of translation -> wordId for quick lookup
+  const translationToWordIds = new Map<string, string[]>();
   words.forEach(word => {
     const translations = [word.primaryTranslation, ...word.alternatives.map(a => a.text)];
-    wordTranslations.set(word.id, translations);
+    translations.forEach(trans => {
+      const normalized = trans.toLowerCase().replace(/[.,;!?]/g, '');
+      if (!translationToWordIds.has(normalized)) {
+        translationToWordIds.set(normalized, []);
+      }
+      translationToWordIds.get(normalized)!.push(word.id);
+    });
   });
 
-  // For each word in our scroll, find its position in the target text
-  words.forEach(word => {
-    const translations = wordTranslations.get(word.id) || [];
-    let bestPosition = -1;
-    let bestMatch = word.primaryTranslation;
+  // Process target words in order
+  targetWords.forEach(targetWord => {
+    const normalized = targetWord.toLowerCase().replace(/[.,;!?]/g, '');
+    const matchingWordIds = translationToWordIds.get(normalized);
 
-    // Try each translation to find the earliest match in the target text
-    translations.forEach(trans => {
-      const normalizedTrans = trans.toLowerCase().replace(/[.,;!?]/g, '');
-      const normalizedTarget = translatedText.toLowerCase().replace(/[.,;!?]/g, '');
-      
-      // Find all occurrences of this translation in the target text
-      const regex = new RegExp(`\\b${normalizedTrans}\\b`, 'gi');
-      let match;
-      while ((match = regex.exec(normalizedTarget)) !== null) {
-        const position = match.index;
-        // Check if this position is already taken by another word
-        let isTaken = false;
-        for (const [wordId, pos] of wordPositions) {
-          // If another word occupies this position (within a small tolerance)
-          if (Math.abs(pos - position) < normalizedTrans.length) {
-            isTaken = true;
-            break;
+    if (matchingWordIds && matchingWordIds.length > 0) {
+      // Find the first unused matching word
+      const unusedWordId = matchingWordIds.find(id => !usedWordIds.has(id));
+      if (unusedWordId) {
+        const word = words.find(w => w.id === unusedWordId);
+        if (word) {
+          wordOrder.push(unusedWordId);
+          usedWordIds.add(unusedWordId);
+
+          // Check if we need a custom translation
+          const isCustom = targetWord.toLowerCase() !== word.primaryTranslation.toLowerCase();
+          if (isCustom) {
+            customTranslations[unusedWordId] = targetWord;
           }
         }
-        
-        if (!isTaken && (bestPosition === -1 || position < bestPosition)) {
-          bestPosition = position;
-          bestMatch = trans;
-        }
       }
-    });
-
-    if (bestPosition !== -1) {
-      wordPositions.set(word.id, bestPosition);
-      // Check if we need a custom translation
-      if (bestMatch.toLowerCase() !== word.primaryTranslation.toLowerCase()) {
-        customTranslations[word.id] = bestMatch;
-      }
-    } else {
-      // Word not found in target text, add to end with primary translation
-      wordPositions.set(word.id, 999999);
     }
   });
 
-  // Sort words by their position in the target text
-  const sortedWords = Array.from(wordPositions.entries())
-    .sort((a, b) => a[1] - b[1])
-    .map(([wordId]) => wordId);
+  // Add any remaining words that weren't matched (preserve original order)
+  words.forEach(word => {
+    if (!usedWordIds.has(word.id)) {
+      wordOrder.push(word.id);
+    }
+  });
 
-  return { wordOrder: sortedWords, customTranslations };
+  return { wordOrder, customTranslations };
 }
