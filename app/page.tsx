@@ -61,7 +61,7 @@ function SortableWord({
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} {...attributes}>
       <TranslationWord
         word={word}
         onTranslationSelect={onTranslationSelect}
@@ -71,6 +71,7 @@ function SortableWord({
         customTranslation={customTranslation}
         isLocked={isLocked}
         onLockToggle={onLockToggle}
+        dragHandleProps={listeners}
       />
     </div>
   );

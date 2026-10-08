@@ -8,7 +8,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Check, Lock, Unlock, RotateCcw, Edit2 } from "lucide-react";
+import { ChevronDown, Check, Lock, Unlock, RotateCcw, Edit2, GripVertical } from "lucide-react";
 
 interface TranslationWordProps {
   word: ScrollWord;
@@ -19,6 +19,7 @@ interface TranslationWordProps {
   customTranslation?: string;
   isLocked?: boolean;
   onLockToggle?: () => void;
+  dragHandleProps?: any;
 }
 
 export function TranslationWord({
@@ -30,6 +31,7 @@ export function TranslationWord({
   customTranslation,
   isLocked = false,
   onLockToggle,
+  dragHandleProps,
 }: TranslationWordProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditingCustom, setIsEditingCustom] = useState(false);
@@ -77,6 +79,9 @@ export function TranslationWord({
           } ${isLocked ? "ring-2 ring-purple-500/50" : ""}`}
         >
           <div className="flex items-start gap-2 w-full">
+            <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+              <GripVertical className="w-5 h-5 text-gray-500 flex-shrink-0 mt-1" />
+            </div>
             <div className="flex-1">
               <span className="flex flex-col gap-2">
                 <span className="text-xl text-purple-400 font-mono font-medium">
