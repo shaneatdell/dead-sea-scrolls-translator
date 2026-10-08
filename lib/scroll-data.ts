@@ -915,11 +915,11 @@ export const commonPresets: TranslationPreset[] = [
     isCustom: false,
   },
   {
-    id: "niv",
-    name: "New International Version",
+    id: "poetic",
+    name: "Poetic/Literary",
     sectionId: "isaiah-scroll",
     wordOrder: [
-      "word-1", "word-2", "word-3", "word-4", "word-5", "word-6", "word-7",
+      "word-3", "word-2", "word-1", "word-4", "word-5", "word-7", "word-6",
       "word-8", "word-9", "word-10", "word-11", "word-12", "word-13", "word-14",
       "word-15", "word-16", "word-17", "word-18", "word-19", "word-20"
     ],
@@ -932,8 +932,8 @@ export const commonPresets: TranslationPreset[] = [
     isCustom: false,
   },
   {
-    id: "esv",
-    name: "English Standard Version",
+    id: "modern",
+    name: "Modern Readable",
     sectionId: "isaiah-scroll",
     wordOrder: [
       "word-1", "word-2", "word-3", "word-4", "word-5", "word-6", "word-7",
@@ -941,7 +941,9 @@ export const commonPresets: TranslationPreset[] = [
       "word-15", "word-16", "word-17", "word-18", "word-19", "word-20"
     ],
     translations: {
-      "word-13": "the face of",
+      "word-5": "the sky",
+      "word-9": "became",
+      "word-13": "the surface of",
       "word-14": "the deep",
     },
     isCustom: false,
