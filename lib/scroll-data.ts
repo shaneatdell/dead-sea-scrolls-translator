@@ -936,7 +936,7 @@ export function applyTextPreset(
   // Split target text into words
   const targetWords = translatedText.split(/\s+/).filter(w => w.length > 0);
 
-  // Create a map of translation -> wordId for quick lookup
+  // Create a map of translation -> list of wordIds in their original order
   const translationToWordIds = new Map<string, string[]>();
   words.forEach(word => {
     const translations = [word.primaryTranslation, ...word.alternatives.map(a => a.text)];
@@ -949,24 +949,32 @@ export function applyTextPreset(
     });
   });
 
+  // Track usage count for each translation to handle duplicates
+  const translationUsageCount = new Map<string, number>();
+
   // Process target words in order
   targetWords.forEach(targetWord => {
     const normalized = targetWord.toLowerCase().replace(/[.,;!?]/g, '');
     const matchingWordIds = translationToWordIds.get(normalized);
 
     if (matchingWordIds && matchingWordIds.length > 0) {
-      // Find the first unused matching word
-      const unusedWordId = matchingWordIds.find(id => !usedWordIds.has(id));
-      if (unusedWordId) {
-        const word = words.find(w => w.id === unusedWordId);
+      // Get the current usage count for this translation
+      const usageCount = translationUsageCount.get(normalized) || 0;
+      translationUsageCount.set(normalized, usageCount + 1);
+
+      // Use the nth occurrence of words with this translation
+      const wordId = matchingWordIds[usageCount % matchingWordIds.length];
+      
+      if (wordId && !usedWordIds.has(wordId)) {
+        const word = words.find(w => w.id === wordId);
         if (word) {
-          wordOrder.push(unusedWordId);
-          usedWordIds.add(unusedWordId);
+          wordOrder.push(wordId);
+          usedWordIds.add(wordId);
 
           // Check if we need a custom translation
           const isCustom = targetWord.toLowerCase() !== word.primaryTranslation.toLowerCase();
           if (isCustom) {
-            customTranslations[unusedWordId] = targetWord;
+            customTranslations[wordId] = targetWord;
           }
         }
       }
