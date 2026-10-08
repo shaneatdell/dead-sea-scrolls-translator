@@ -18,10 +18,10 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { deadSeaScrollsData, ScrollSection, TranslationOption } from "@/lib/scroll-data";
+import { deadSeaScrollsData, ScrollSection, TranslationOption, commonPresets, TranslationPreset } from "@/lib/scroll-data";
 import { TranslationWord } from "@/components/translation-word";
 import { Button } from "@/components/ui/button";
-import { BookOpen, RotateCcw, Lock, Unlock } from "lucide-react";
+import { BookOpen, RotateCcw, Lock, Unlock, Save, Download } from "lucide-react";
 
 function SortableWord({
   word,
@@ -90,6 +90,19 @@ export default function Home() {
     deadSeaScrollsData[0].words.map((w) => w.id)
   );
   const [lockedWords, setLockedWords] = useState<Record<string, boolean>>({});
+  const [userPresets, setUserPresets] = useState<TranslationPreset[]>([]);
+
+  // Load user presets from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('userPresets');
+    if (saved) {
+      try {
+        setUserPresets(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to load presets:', e);
+      }
+    }
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -156,6 +169,43 @@ export default function Home() {
 
   const handleResetOrder = () => {
     setWordOrder(selectedSection.words.map((w) => w.id));
+  };
+
+  const handleApplyPreset = (preset: TranslationPreset) => {
+    if (preset.sectionId !== selectedSection.id) return;
+
+    setWordOrder(preset.wordOrder);
+    setUserTranslations({});
+    setCustomTranslations(preset.translations);
+    setLockedWords({});
+  };
+
+  const handleSavePreset = () => {
+    const preset: TranslationPreset = {
+      id: `custom-${Date.now()}`,
+      name: `Custom ${new Date().toLocaleDateString()}`,
+      sectionId: selectedSection.id,
+      wordOrder: [...wordOrder],
+      translations: { ...customTranslations },
+      isCustom: true,
+    };
+
+    const updatedPresets = [...userPresets, preset];
+    setUserPresets(updatedPresets);
+    localStorage.setItem('userPresets', JSON.stringify(updatedPresets));
+  };
+
+  const handleDeletePreset = (presetId: string) => {
+    const updatedPresets = userPresets.filter((p) => p.id !== presetId);
+    setUserPresets(updatedPresets);
+    localStorage.setItem('userPresets', JSON.stringify(updatedPresets));
+  };
+
+  const getAvailablePresets = () => {
+    return [
+      ...commonPresets.filter((p) => p.sectionId === selectedSection.id),
+      ...userPresets.filter((p) => p.sectionId === selectedSection.id),
+    ];
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -225,9 +275,42 @@ export default function Home() {
         {/* Section Info */}
         <div className="mb-8 p-6 bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-lg border border-purple-900/30">
           <h2 className="text-2xl font-semibold mb-2 text-gray-100">{selectedSection.title}</h2>
-          <p className="text-gray-400">
+          <p className="text-gray-400 mb-4">
             {selectedSection.description}
           </p>
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-sm text-gray-400">Translation Presets:</span>
+            {getAvailablePresets().map((preset) => (
+              <div key={preset.id} className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleApplyPreset(preset)}
+                  className="text-xs"
+                >
+                  {preset.name}
+                </Button>
+                {preset.isCustom && (
+                  <button
+                    onClick={() => handleDeletePreset(preset.id)}
+                    className="text-red-400 hover:text-red-300 text-lg leading-none px-1"
+                    title="Delete preset"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSavePreset}
+              className="gap-1 text-xs text-purple-300 hover:text-purple-200"
+            >
+              <Save className="w-3 h-3" />
+              Save as Preset
+            </Button>
+          </div>
         </div>
 
         {/* Translation Grid */}
@@ -306,6 +389,10 @@ export default function Home() {
               </p>
               <p>
                 {wordOrder.join(",") !== selectedSection.words.map((w) => w.id).join(",") ? "Order modified" : "Original order"}
+              </p>
+              <p>
+                {userPresets.filter((p) => p.sectionId === selectedSection.id).length} custom preset
+                {userPresets.filter((p) => p.sectionId === selectedSection.id).length !== 1 ? "s" : ""} saved
               </p>
             </div>
           </div>

@@ -21,6 +21,15 @@ export interface ScrollSection {
   words: ScrollWord[];
 }
 
+export interface TranslationPreset {
+  id: string;
+  name: string;
+  sectionId: string;
+  wordOrder: string[];
+  translations: Record<string, string>; // wordId -> translation text
+  isCustom: boolean;
+}
+
 export const deadSeaScrollsData: ScrollSection[] = [
   {
     id: "isaiah-scroll",
@@ -890,4 +899,51 @@ export const deadSeaScrollsData: ScrollSection[] = [
       }
     ]
   }
+];
+
+export const commonPresets: TranslationPreset[] = [
+  {
+    id: "kjv",
+    name: "King James Version",
+    sectionId: "isaiah-scroll",
+    wordOrder: [
+      "word-1", "word-2", "word-3", "word-4", "word-5", "word-6", "word-7",
+      "word-8", "word-9", "word-10", "word-11", "word-12", "word-13", "word-14",
+      "word-15", "word-16", "word-17", "word-18", "word-19", "word-20"
+    ],
+    translations: {},
+    isCustom: false,
+  },
+  {
+    id: "niv",
+    name: "New International Version",
+    sectionId: "isaiah-scroll",
+    wordOrder: [
+      "word-1", "word-2", "word-3", "word-4", "word-5", "word-6", "word-7",
+      "word-8", "word-9", "word-10", "word-11", "word-12", "word-13", "word-14",
+      "word-15", "word-16", "word-17", "word-18", "word-19", "word-20"
+    ],
+    translations: {
+      "word-5": "the sky",
+      "word-9": "became",
+      "word-13": "the surface of",
+      "word-14": "the deep",
+    },
+    isCustom: false,
+  },
+  {
+    id: "esv",
+    name: "English Standard Version",
+    sectionId: "isaiah-scroll",
+    wordOrder: [
+      "word-1", "word-2", "word-3", "word-4", "word-5", "word-6", "word-7",
+      "word-8", "word-9", "word-10", "word-11", "word-12", "word-13", "word-14",
+      "word-15", "word-16", "word-17", "word-18", "word-19", "word-20"
+    ],
+    translations: {
+      "word-13": "the face of",
+      "word-14": "the deep",
+    },
+    isCustom: false,
+  },
 ];
