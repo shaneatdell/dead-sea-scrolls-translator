@@ -25,16 +25,15 @@ export interface TranslationPreset {
   id: string;
   name: string;
   sectionId: string;
-  wordOrder: string[];
-  translations: Record<string, string>; // wordId -> translation text
+  translatedText: string; // Full translated text as a string
   isCustom: boolean;
 }
 
 export const deadSeaScrollsData: ScrollSection[] = [
   {
-    id: "isaiah-scroll",
-    title: "The Great Isaiah Scroll (1QIsaᵃ)",
-    description: "One of the original seven Dead Sea Scrolls discovered in 1947. Contains the complete Book of Isaiah.",
+    id: "genesis-scroll",
+    title: "Genesis Creation Account",
+    description: "Genesis 1:1-2 from the Dead Sea Scrolls - the creation narrative describing the beginning of the world.",
     words: [
       {
         id: "word-1",
@@ -905,47 +904,78 @@ export const commonPresets: TranslationPreset[] = [
   {
     id: "kjv",
     name: "King James Version",
-    sectionId: "isaiah-scroll",
-    wordOrder: [
-      "word-1", "word-2", "word-3", "word-4", "word-5", "word-6", "word-7",
-      "word-8", "word-9", "word-10", "word-11", "word-12", "word-13", "word-14",
-      "word-15", "word-16", "word-17", "word-18", "word-19", "word-20"
-    ],
-    translations: {},
+    sectionId: "genesis-scroll",
+    translatedText: "In the beginning God created the heavens and the earth And the earth was without form and void and darkness was upon the face of the deep And the Spirit of God moved upon the face of the waters",
     isCustom: false,
   },
   {
     id: "poetic",
     name: "Poetic/Literary",
-    sectionId: "isaiah-scroll",
-    wordOrder: [
-      "word-3", "word-2", "word-1", "word-4", "word-5", "word-7", "word-6",
-      "word-8", "word-9", "word-10", "word-11", "word-12", "word-13", "word-14",
-      "word-15", "word-16", "word-17", "word-18", "word-19", "word-20"
-    ],
-    translations: {
-      "word-5": "the sky",
-      "word-9": "became",
-      "word-13": "the surface of",
-      "word-14": "the deep",
-    },
+    sectionId: "genesis-scroll",
+    translatedText: "God created in the beginning the heavens and the earth the earth was formless and void darkness upon the deep the face of the waters the Spirit of God hovered",
     isCustom: false,
   },
   {
     id: "modern",
     name: "Modern Readable",
-    sectionId: "isaiah-scroll",
-    wordOrder: [
-      "word-1", "word-2", "word-3", "word-4", "word-5", "word-6", "word-7",
-      "word-8", "word-9", "word-10", "word-11", "word-12", "word-13", "word-14",
-      "word-15", "word-16", "word-17", "word-18", "word-19", "word-20"
-    ],
-    translations: {
-      "word-5": "the sky",
-      "word-9": "became",
-      "word-13": "the surface of",
-      "word-14": "the deep",
-    },
+    sectionId: "genesis-scroll",
+    translatedText: "In the beginning God created the sky and the land And the land became empty and desolate and darkness covered the surface of the waters And the breath of God hovered over the surface of the water",
     isCustom: false,
   },
 ];
+
+// Function to match translated text to word order and custom translations
+export function applyTextPreset(
+  translatedText: string,
+  words: ScrollWord[]
+): { wordOrder: string[]; customTranslations: Record<string, string> } {
+  const wordOrder: string[] = [];
+  const customTranslations: Record<string, string> = {};
+  const usedWordIds = new Set<string>();
+
+  // Split translated text into words
+  const targetWords = translatedText.split(/\s+/).filter(w => w.length > 0);
+
+  // Create a map of possible translations for each word
+  const wordTranslationMap = new Map<string, ScrollWord[]>();
+  words.forEach(word => {
+    const translations = [word.primaryTranslation, ...word.alternatives.map(a => a.text)];
+    translations.forEach(trans => {
+      const normalized = trans.toLowerCase().replace(/[.,;!?]/g, '');
+      if (!wordTranslationMap.has(normalized)) {
+        wordTranslationMap.set(normalized, []);
+      }
+      wordTranslationMap.get(normalized)!.push(word);
+    });
+  });
+
+  // Match each target word to a scroll word
+  targetWords.forEach(targetWord => {
+    const normalized = targetWord.toLowerCase().replace(/[.,;!?]/g, '');
+    const matchingWords = wordTranslationMap.get(normalized);
+
+    if (matchingWords && matchingWords.length > 0) {
+      // Find the first unused matching word
+      const unusedWord = matchingWords.find(w => !usedWordIds.has(w.id));
+      if (unusedWord) {
+        wordOrder.push(unusedWord.id);
+        usedWordIds.add(unusedWord.id);
+
+        // Check if this is a custom translation (not the primary)
+        const isCustom = targetWord.toLowerCase() !== unusedWord.primaryTranslation.toLowerCase();
+        if (isCustom) {
+          customTranslations[unusedWord.id] = targetWord;
+        }
+      }
+    }
+  });
+
+  // Add any remaining words that weren't matched (preserve original order)
+  words.forEach(word => {
+    if (!usedWordIds.has(word.id)) {
+      wordOrder.push(word.id);
+    }
+  });
+
+  return { wordOrder, customTranslations };
+}

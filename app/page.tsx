@@ -18,7 +18,7 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { deadSeaScrollsData, ScrollSection, TranslationOption, commonPresets, TranslationPreset } from "@/lib/scroll-data";
+import { deadSeaScrollsData, ScrollSection, TranslationOption, commonPresets, TranslationPreset, applyTextPreset } from "@/lib/scroll-data";
 import { TranslationWord } from "@/components/translation-word";
 import { Button } from "@/components/ui/button";
 import { BookOpen, RotateCcw, Lock, Unlock, Save, Download } from "lucide-react";
@@ -97,7 +97,20 @@ export default function Home() {
     const saved = localStorage.getItem('userPresets');
     if (saved) {
       try {
-        setUserPresets(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        // Migrate old preset format to new format if needed
+        const migrated = parsed.map((preset: any) => {
+          if (preset.translatedText) {
+            return preset; // Already in new format
+          }
+          // Old format - clear it (user will need to recreate)
+          return null;
+        }).filter(Boolean);
+        setUserPresets(migrated);
+        if (migrated.length !== parsed.length) {
+          // Save migrated format (deleted old format presets)
+          localStorage.setItem('userPresets', JSON.stringify(migrated));
+        }
       } catch (e) {
         console.error('Failed to load presets:', e);
       }
@@ -174,9 +187,14 @@ export default function Home() {
   const handleApplyPreset = (preset: TranslationPreset) => {
     if (preset.sectionId !== selectedSection.id) return;
 
-    setWordOrder(preset.wordOrder);
+    const { wordOrder, customTranslations } = applyTextPreset(
+      preset.translatedText,
+      selectedSection.words
+    );
+
+    setWordOrder(wordOrder);
     setUserTranslations({});
-    setCustomTranslations(preset.translations);
+    setCustomTranslations(customTranslations);
     setLockedWords({});
   };
 
@@ -185,8 +203,7 @@ export default function Home() {
       id: `custom-${Date.now()}`,
       name: `Custom ${new Date().toLocaleDateString()}`,
       sectionId: selectedSection.id,
-      wordOrder: [...wordOrder],
-      translations: { ...customTranslations },
+      translatedText: getFullTranslation(),
       isCustom: true,
     };
 
