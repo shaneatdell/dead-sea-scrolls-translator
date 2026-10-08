@@ -15,7 +15,7 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
+  rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { deadSeaScrollsData, ScrollSection, TranslationOption } from "@/lib/scroll-data";
@@ -52,12 +52,11 @@ function SortableWord({
   } = useSortable({
     id: word.id,
     disabled: isLocked,
-    animateLayoutChanges: () => false,
   });
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isDragging ? 'transform 150ms ease' : undefined,
+    transition: undefined,
     opacity: isDragging ? 0.4 : 1,
   };
 
@@ -261,8 +260,8 @@ export default function Home() {
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext items={wordOrder} strategy={verticalListSortingStrategy}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 transition-none">
+            <SortableContext items={wordOrder} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {wordOrder.map((wordId) => {
                   const word = selectedSection.words.find((w) => w.id === wordId);
                   if (!word) return null;
